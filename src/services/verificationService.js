@@ -675,6 +675,8 @@ export function validateAutoVerifyCriteria(criteria, accountAgeDays) {
 }
 
 export async function ensureVerificationMessage(client) {
+    console.log("✅ ensureVerificationMessage wurde gestartet");
+
     try {
         for (const [guildId, guild] of client.guilds.cache) {
 
