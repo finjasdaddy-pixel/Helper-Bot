@@ -89,6 +89,8 @@ class TitanBot extends Client {
       
       startupLog('Logging into Discord...');
       await this.login(this.config.bot.token);
+
+      await ensureVerificationMessage(this);
       startupLog('Discord login successful');
       
       startupLog('Registering slash commands globally...');
