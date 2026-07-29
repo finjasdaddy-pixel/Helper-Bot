@@ -16,6 +16,7 @@ import { loadCommands, registerCommands as registerSlashCommands } from './handl
 import { runSafeTask, handleTaskError, ErrorCodes } from './utils/errorHandler.js';
 import { initializeMusic } from './services/music/riffySetup.js';
 import { shutdownMusic } from './services/music/playerHandler.js';
+import { ensureVerificationMessage } from './services/verificationService.js';
 import pkg from '../package.json' with { type: 'json' };
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/database/schemaVersion.js';
 
@@ -205,85 +206,7 @@ class TitanBot extends Client {
       });
     });
     
-    app.get('/auth/discord', (req, res) => {
-      const clientId = process.env.DISCORD_CLIENT_ID;
-      const redirectUri = process.env.DISCORD_REDIRECT_URI;
-
-      if (!clientId || !redirectUri) {
-        return res.status(500).send('OAuth2 is not configured.');
-      }
-
-      const params = new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        response_type: 'code',
-        scope: 'identify email',
-      });
-
-      res.redirect(
-        `https://discord.com/oauth2/authorize?${params.toString()}`
-      );
-    });
-
-    app.get('/auth/discord/callback', async (req, res) => {
-      const { code } = req.query;
-
-      if (!code) {
-        return res.status(400).send('Missing OAuth2 code.');
-      }
-
-      try {
-        const tokenResponse = await axios.post(
-          'https://discord.com/api/oauth2/token',
-          new URLSearchParams({
-            client_id: process.env.DISCORD_CLIENT_ID,
-            client_secret: process.env.DISCORD_CLIENT_SECRET,
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: process.env.DISCORD_REDIRECT_URI,
-          }),
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }
-        );
-
-        const accessToken = tokenResponse.data.access_token;
-
-        const userResponse = await axios.get(
-          'https://discord.com/api/users/@me',
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-
-        const user = userResponse.data;
-
-        console.log('Discord User:', {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        });
-
-        res.send(`
-          <h1>Verifizierung erfolgreich!</h1>
-          <p>Du kannst dieses Fenster jetzt schließen.</p>
-        `);
-      } catch (error) {
-        logger.error('Discord OAuth2 error:', {
-          response: error.response?.data,
-          message: error.message,
-          status: error.response?.status,
-        });
-
-        res.status(500).send('Discord verification failed.');
-      }
-    });
-
-
+   
     const startServer = (port, attempt = 0) => {
       let hasStartedListening = false;
       const server = app.listen(port, host, () => {
