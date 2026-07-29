@@ -30,7 +30,14 @@ const appConfig = {
       ...shop,
     },
   },
+oauth: {
+clientId: process.env.DISCORD_OAUTH_CLIENT_ID || process.env.CLIENT_ID,
+clientSecret: process.env.DISCORD_OAUTH_CLIENT_SECRET,
+redirectUri: process.env.DISCORD_OAUTH_REDIRECT_URI,
+scopes: ["identify", "email"],
+},
 
+  
   // PostgreSQL configuration - Primary production database
   postgresql: {
     ...pgConfig,
