@@ -677,6 +677,7 @@ export function validateAutoVerifyCriteria(criteria, accountAgeDays) {
 export async function ensureVerificationMessage(client) {
     try {
         for (const [guildId, guild] of client.guilds.cache) {
+
             try {
                 const guildConfig = await getGuildConfig(client, guildId);
 
@@ -684,37 +685,86 @@ export async function ensureVerificationMessage(client) {
                     continue;
                 }
 
-                const verificationChannelId = guildConfig.verification.channelId;
+                const channelId = guildConfig.verification.channelId;
 
-                if (!verificationChannelId) {
-                    logger.warn('Verification channel not configured', {
+                if (!channelId) {
+                    logger.warn('Verification channel missing', {
                         guildId
                     });
                     continue;
                 }
 
-                const channel = guild.channels.cache.get(verificationChannelId);
+                const channel = guild.channels.cache.get(channelId);
 
                 if (!channel) {
                     logger.warn('Verification channel not found', {
                         guildId,
-                        channelId: verificationChannelId
+                        channelId
                     });
                     continue;
                 }
 
-                logger.info('Verification system checked', {
-                    guildId,
-                    channelId: channel.id
+                const messages = await channel.messages.fetch({
+                    limit: 20
                 });
 
+                const exists = messages.some(
+                    msg => msg.author.id === client.user.id &&
+                    msg.embeds.length > 0 &&
+                    msg.embeds[0].title?.includes('Verifizierung')
+                );
+
+                if (exists) {
+                    logger.info('Verification message already exists', {
+                        guildId
+                    });
+                    continue;
+                }
+
+
+                await channel.send({
+                    embeds: [
+                        {
+                            title: "✅ Verifizierung",
+                            description:
+                                "Klicke auf den Button unten, um dich zu verifizieren und Zugriff auf den Server zu erhalten.",
+                            color: 0x5865F2,
+                            footer: {
+                                text: guild.name
+                            },
+                            timestamp: new Date()
+                        }
+                    ],
+                    components: [
+                        {
+                            type: 1,
+                            components: [
+                                {
+                                    type: 2,
+                                    style: 3,
+                                    label: "Verifizieren",
+                                    custom_id: "verify_button"
+                                }
+                            ]
+                        }
+                    ]
+                });
+
+
+                logger.info('Verification message created', {
+                    guildId,
+                    channelId
+                });
+
+
             } catch (error) {
-                logger.error('Error checking verification setup', {
+                logger.error('Verification message failed', {
                     guildId,
                     error: error.message
                 });
             }
         }
+
     } catch (error) {
         logger.error('Error ensuring verification messages:', error);
     }
