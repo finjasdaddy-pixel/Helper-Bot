@@ -1,0 +1,40 @@
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('chess')
+        .setDescription('Starte ein Schachspiel gegen einen anderen Spieler.')
+        .addUserOption(option =>
+            option
+                .setName('spieler')
+                .setDescription('Der Spieler, gegen den du Schach spielen möchtest.')
+                .setRequired(true)
+        ),
+
+    async execute(interaction) {
+        const opponent = interaction.options.getUser('spieler');
+
+        if (opponent.id === interaction.user.id) {
+            return interaction.reply({
+                content: '❌ Du kannst nicht gegen dich selbst spielen!',
+                ephemeral: true
+            });
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle('♟️ Schach-Herausforderung')
+            .setDescription(
+                `**${interaction.user.username}** fordert **${opponent.username}** zu einer Partie Schach heraus!\n\n` +
+                `🎮 **Weiß:** ${interaction.user}\n` +
+                `🎮 **Schwarz:** ${opponent}\n\n` +
+                `⏳ ${opponent}, möchtest du die Herausforderung annehmen?`
+            )
+            .setColor(0x5865F2)
+            .setFooter({ text: 'Chess System' });
+
+        await interaction.reply({
+            content: `${opponent}`,
+            embeds: [embed]
+        });
+    }
+};
