@@ -674,13 +674,48 @@ export function validateAutoVerifyCriteria(criteria, accountAgeDays) {
     return { criteria, accountAgeDays };
 }
 
-export default {
-    verifyUser,
-    autoVerifyOnJoin,
-    removeVerification,
-    validateVerificationSetup,
-    validateBotCanAssignRole,
-    checkVerificationCooldown,
-    trackVerificationAttempt,
-    validateAutoVerifyCriteria
-};
+export async function ensureVerificationMessage(client) {
+    try {
+        for (const [guildId, guild] of client.guilds.cache) {
+            try {
+                const guildConfig = await getGuildConfig(client, guildId);
+
+                if (!guildConfig?.verification?.enabled) {
+                    continue;
+                }
+
+                const verificationChannelId = guildConfig.verification.channelId;
+
+                if (!verificationChannelId) {
+                    logger.warn('Verification channel not configured', {
+                        guildId
+                    });
+                    continue;
+                }
+
+                const channel = guild.channels.cache.get(verificationChannelId);
+
+                if (!channel) {
+                    logger.warn('Verification channel not found', {
+                        guildId,
+                        channelId: verificationChannelId
+                    });
+                    continue;
+                }
+
+                logger.info('Verification system checked', {
+                    guildId,
+                    channelId: channel.id
+                });
+
+            } catch (error) {
+                logger.error('Error checking verification setup', {
+                    guildId,
+                    error: error.message
+                });
+            }
+        }
+    } catch (error) {
+        logger.error('Error ensuring verification messages:', error);
+    }
+}
