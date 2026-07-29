@@ -1,5 +1,6 @@
 ﻿import 'dotenv/config';
 import axios from 'axios';
+import crypto from 'crypto';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import express from 'express';
