@@ -161,14 +161,44 @@ class TitanBot extends Client {
       }
     );
 
-    const user = userResponse.data;
+const user = userResponse.data;
 
-    res.send(`OAuth erfolgreich: ${user.username}`);
-  } catch (error) {
-    logger.error('Discord OAuth callback failed', error);
-    res.status(500).send('OAuth failed');
+console.log("OAuth User:", user);
+
+try {
+  const guild = this.guilds.cache.get(process.env.GUILD_ID);
+
+  if (!guild) {
+    return res.status(500).send("Server nicht gefunden");
   }
-});
+
+  const member = await guild.members.fetch(user.id);
+
+ await member.roles.add(process.env.MEMBER_ROLE_ID);
+
+  console.log(`✅ Rolle vergeben an ${user.username}`);
+
+  return res.send(`
+    <h2>Verifizierung erfolgreich ✅</h2>
+    <p>${user.username} wurde verifiziert.</p>
+    <p>Du kannst dieses Fenster schließen.</p>
+  `);
+
+} catch (error) {
+  console.error("Rollenvergabe/OAuth Fehler:", error);
+
+  return res.status(500).send(`
+    <h2>Fehler ❌</h2>
+    <p>Verifizierung fehlgeschlagen.</p>
+  `);
+}
+
+} catch (error) {
+  console.error("Discord OAuth Fehler:", error);
+  return res.status(500).send("OAuth Fehler");
+}
+
+
     const configuredPort = Number(this.config.api?.port || process.env.PORT || 3000);
     const maxPortRetryAttempts = Number(process.env.PORT_RETRY_ATTEMPTS || 5);
     const host = process.env.WEB_HOST || '0.0.0.0';
