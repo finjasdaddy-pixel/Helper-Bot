@@ -1,11 +1,8 @@
-import { MessageFlags } from 'discord.js';
 import { handleInteractionError, replyUserError, ErrorTypes } from '../utils/errorHandler.js';
 import { logger } from '../utils/logger.js';
-import { InteractionHelper } from '../utils/interactionHelper.js';
-
 export async function handleVerificationButton(interaction, client) {
     try {
-        await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
+await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.guild) {
             return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'This button can only be used in a server.' });
@@ -22,7 +19,7 @@ export async function handleVerificationButton(interaction, client) {
 
        const oauthUrl = `${process.env.DISCORD_REDIRECT_URI.replace('/auth/discord/callback', '/auth/discord')}`;
 
-return await InteractionHelper.safeEditReply(interaction, {
+return await interaction.editReply({
     content: `🔐 Bitte bestätige deine Discord-Identität:\n${oauthUrl}`
 });
 
