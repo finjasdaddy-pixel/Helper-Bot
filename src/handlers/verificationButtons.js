@@ -1,6 +1,7 @@
 import { handleInteractionError, replyUserError, ErrorTypes } from '../utils/errorHandler.js';
 import { logger } from '../utils/logger.js';
 export async function handleVerificationButton(interaction, client) {
+console.log("VERIFY BUTTON AUSGELOEST:", interaction.customId);
     try {
 await interaction.deferReply({ ephemeral: true });
 
