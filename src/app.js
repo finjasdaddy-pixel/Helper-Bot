@@ -197,7 +197,7 @@ try {
   console.error("Discord OAuth Fehler:", error);
   return res.status(500).send("OAuth Fehler");
 }
-
+});
 
     const configuredPort = Number(this.config.api?.port || process.env.PORT || 3000);
     const maxPortRetryAttempts = Number(process.env.PORT_RETRY_ATTEMPTS || 5);
