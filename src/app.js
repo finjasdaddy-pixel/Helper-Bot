@@ -116,6 +116,59 @@ class TitanBot extends Client {
 
   startWebServer() {
     const app = express();
+    app.get('/auth/discord', (req, res) => {
+    const params = new URLSearchParams({
+        client_id: process.env.DISCORD_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: process.env.DISCORD_REDIRECT_URI,
+        scope: 'identify email'
+    });
+
+    res.redirect(`https://discord.com/oauth2/authorize?${params.toString()}`);
+});
+    app.get('/auth/discord/callback', async (req, res) => {
+  const code = req.query.code;
+
+  if (!code) {
+    return res.status(400).send('Missing OAuth code');
+  }
+
+  try {
+    const tokenResponse = await axios.post(
+      'https://discord.com/api/oauth2/token',
+      new URLSearchParams({
+        client_id: process.env.DISCORD_CLIENT_ID,
+        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: process.env.DISCORD_REDIRECT_URI
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    const userResponse = await axios.get(
+      'https://discord.com/api/users/@me',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const user = userResponse.data;
+
+    res.send(`OAuth erfolgreich: ${user.username}`);
+  } catch (error) {
+    logger.error('Discord OAuth callback failed', error);
+    res.status(500).send('OAuth failed');
+  }
+});
     const configuredPort = Number(this.config.api?.port || process.env.PORT || 3000);
     const maxPortRetryAttempts = Number(process.env.PORT_RETRY_ATTEMPTS || 5);
     const host = process.env.WEB_HOST || '0.0.0.0';
