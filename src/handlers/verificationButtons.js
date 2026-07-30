@@ -1,6 +1,4 @@
 import { MessageFlags } from 'discord.js';
-import { successEmbed } from '../utils/embeds.js';
-import { verifyUser } from '../services/verificationService.js';
 import { handleInteractionError, replyUserError, ErrorTypes } from '../utils/errorHandler.js';
 import { logger } from '../utils/logger.js';
 import { InteractionHelper } from '../utils/interactionHelper.js';
@@ -22,27 +20,11 @@ export async function handleVerificationButton(interaction, client) {
             userTag: interaction.user.tag
         });
 
-        const result = await verifyUser(client, guild.id, userId, {
-            source: 'button_click',
-            moderatorId: null
-        });
+       const oauthUrl = `${process.env.DISCORD_REDIRECT_URI.replace('/auth/discord/callback', '/auth/discord')}`;
 
-        if (result.status === 'already_verified') {
-            return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'You are already verified and have access to all server channels.' });
-        }
-
-        logger.info('User verified via button', {
-            guildId: guild.id,
-            userId,
-            roleName: result.roleName
-        });
-
-        await InteractionHelper.safeEditReply(interaction, {
-            embeds: [successEmbed(
-                "✅ Verification Successful!",
-                `You have been verified and given the **${result.roleName}** role!\n\nYou now have access to all server channels and features. Welcome! 🎉`
-            )],
-        });
+return await InteractionHelper.safeEditReply(interaction, {
+    content: `🔐 Bitte bestätige deine Discord-Identität:\n${oauthUrl}`
+});
 
     } catch (error) {
         logger.error('Error in verification button handler', {
